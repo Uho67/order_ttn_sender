@@ -2,7 +2,8 @@ require('dotenv').config(); // Load environment variables
 const express = require('express');
 const bodyParser = require('body-parser');
 const OrderRepository = require('./order/OrderRepository');
-
+const NovaPostApiClient = require('./nova_post/NovaPostApiClient');
+const newPostApi = new NovaPostApiClient();  // Import the class
 const app = express();
 const orderRepo = new OrderRepository();
 
@@ -12,7 +13,7 @@ const bot = new TelegramBot(token, { polling: true });
 const TelegramMessageConverter = require('./telegram/TelegramMessageConverter');
 const axios = require('axios');
 
-const messageConverter = new TelegramMessageConverter();
+const orderMessageConverter = new TelegramMessageConverter();
 
 app.use(bodyParser.json());
 
@@ -65,38 +66,33 @@ app.put('/orders/ttn', async (req, res) => {
 
 // Listen to all text messages
 bot.on('message', async (msg) => {
-    try {
-        const response = await axios.post('https://api.novaposhta.ua/v2.0/json/', {
-          apiKey: 'cecf83c0276197d2c6780d2d84af1a1b',
-          modelName: 'InternetDocumentGeneral',
-          calledMethod: 'getDocumentList',
-          methodProperties: {
-            "DateTimeFrom": "04.04.2025",
-            "DateTimeTo": "05.05.2025",
-            "GetFullList": 1
-          }
-        });
-
-        console.log(response.data);
-    
-        // const documents = response.data.data;
-    
-        // console.log('Your shipments:', documents);
-    
-        // // You can loop through and print TTNs, recipient names, etc.
-        // documents.forEach((doc) => {
-        //   console.log(`TTN: ${doc.IntDocNumber}, Recipient: ${doc.RecipientFullName}`);
-        // });
-    
-      } catch (error) {
-        console.error('Error fetching documents:', error.response?.data || error.message);
+    if (msg.text.toLowerCase().startsWith('bot_check_ttns')) {
+        try {
+            console.log(msg);
+            const documentList = await newPostApi.getDocumentList('04.04.2025', '05.05.2025');
+            documentList.forEach(async (shipment) => {
+                const order = await orderRepo.findOrderByCustomerPhone(shipment.customer_phone);
+                if (order) {
+                    await orderRepo.changeOrderNovaPostTtnByCustomerPhone(order.customer_phone, shipment.nova_post_ttn);
+                    bot.sendMessage(order.telegram_chat_id, 'Here is your TTN ' + shipment.nova_post_ttn, {
+                        reply_to_message_id: order.telegram_message_id
+                      });
+                }
+            });
+        } catch (error) {
+            console.error('Error:', error.message);
+        }
       }
-    orderRepo.saveOrder(messageConverter.convert(msg));
+      
+    const order = orderMessageConverter.convert(msg);
+    if (!order.customer_phone) {
+        return;
+    }
+    orderRepo.saveOrder(order);
 });
 
 bot.on('edited_message', (msg) => {
-    const order = messageConverter.convert(msg);
-    console.log(order);
+    const order = orderMessageConverter.convert(msg);
     orderRepo.changeOrderCustomerPhoneByTelegramMessageId(order.telegram_message_id, order.customer_phone);
 });
 

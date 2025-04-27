@@ -1,7 +1,7 @@
 class TelegramMessageConverter {
     constructor() {
       // Define the regex for extracting Ukrainian phone numbers
-      this.phoneRegex = /(?:\+?38)?(?:0(66|73|93|97|98|99)\d{7})/;
+      this.phoneRegex = /(?:\+?38)?(?:0(66|67|68|73|93|97|98|99)\d{7})/;
     }
   
     /**
@@ -13,7 +13,9 @@ class TelegramMessageConverter {
       const phoneMatch = message.text.match(this.phoneRegex);
   
       const customerPhone = phoneMatch ? phoneMatch[0].replace(/^\+?38/, '') : null; // Remove +38 or 38 prefix if present
-  
+      if (!customerPhone) {
+        return {};
+      }
       return {
         telegram_chat_id: message.chat.id.toString(),
         telegram_message_id: message.message_id.toString(),
