@@ -2,19 +2,24 @@ require('dotenv').config(); // Load environment variables
 const express = require('express');
 const bodyParser = require('body-parser');
 const OrderRepository = require('./order/OrderRepository');
+const packageRepo = require('./nova_post/PackageRepository');
 const NovaPostApiClient = require('./nova_post/NovaPostApiClient');
+const MessageProcessor = require('./telegram/MessageProcessor');
+const TelegramBot = require('node-telegram-bot-api');
+const TelegramMessageConverter = require('./telegram/TelegramMessageConverter');
+const connectionRepo = require('./nova_post/ConnectionRepository');
+
 const newPostApi = new NovaPostApiClient();  // Import the class
 const app = express();
 const orderRepo = new OrderRepository();
-
-const TelegramBot = require('node-telegram-bot-api');
 const token = process.env.BOT_TOKEN;
 const bot = new TelegramBot(token, { polling: true });
-const TelegramMessageConverter = require('./telegram/TelegramMessageConverter');
 const axios = require('axios');
-
+const cors = require('cors');
 const orderMessageConverter = new TelegramMessageConverter();
+const messageProcessor = new MessageProcessor(bot, orderRepo, newPostApi, orderMessageConverter);
 
+app.use(cors());
 app.use(bodyParser.json());
 
 // Welcome route
@@ -22,73 +27,76 @@ app.get('/', (req, res) => {
     res.send('Welcome to the Order TTN Server!');
 });
 
-// Create a new order
-app.post('/orders', async (req, res) => {
-    const { telegram_chat_id, telegram_message_id, customer_phone, nova_post_ttn } = req.body;
-
+// Add a new Nova Post connection
+app.post('/api/novaPostConnections', async (req, res) => {
     try {
-        const newOrder = await orderRepo.saveOrder({
-            telegram_chat_id,
-            telegram_message_id,
-            customer_phone,
-            nova_post_ttn,
-        });
-        res.status(201).json(newOrder);
+        const { name, apiKey } = req.body;
+
+        if (!name || !apiKey) {
+            return res.status(400).send('Both "name" and "apiKey" are required.');
+        }
+
+        const newConnection = await connectionRepo.addConnection(name, apiKey);
+        res.status(201).json(newConnection);
     } catch (error) {
-        console.error('Error creating order:', error);
-        res.status(500).send('An error occurred');
+        console.error('Error adding Nova Post connection:', error.message);
+        res.status(500).send('An error occurred while adding the Nova Post connection.');
+    }
+});
+
+// Fetch all Nova Post connections
+app.get('/api/novaPostConnections', async (req, res) => {
+    try {
+        const connections = await connectionRepo.fetchAllConnections();
+        res.json(connections);
+    } catch (error) {
+        console.error('Error fetching Nova Post connections:', error.message);
+        res.status(500).send('An error occurred while fetching Nova Post connections.');
+    }
+});
+
+// Delete a Nova Post connection by ID
+app.delete('/api/novaPostConnections/:id', async (req, res) => {
+    try {
+        const { id } = req.params;
+
+        if (!id) {
+            return res.status(400).send('Connection ID is required.');
+        }
+
+        const deletedConnection = await connectionRepo.deleteConnectionById(parseInt(id, 10));
+        res.json(deletedConnection);
+    } catch (error) {
+        console.error(`Error deleting Nova Post connection with ID ${req.params.id}:`, error.message);
+        res.status(500).send('An error occurred while deleting the Nova Post connection.');
     }
 });
 
 // Fetch all orders
-app.get('/orders', async (req, res) => {
+app.get('/api/orders', async (req, res) => {
     try {
-        const orders = await orderRepo.prisma.order.findMany(); // Directly using Prisma for fetching all orders
+        const orders = await orderRepo.getAllOrders(); // Fetch all orders from the database
         res.json(orders);
     } catch (error) {
-        console.error('Error fetching orders:', error);
-        res.status(500).send('An error occurred');
+        console.error('Error fetching orders:', error.message);
+        res.status(500).send('An error occurred while fetching orders.');
     }
 });
 
-// Update TTN for multiple orders by customer_phone
-app.put('/orders/ttn', async (req, res) => {
-    const orders = req.body; // Expecting an array of { customer_phone, ttn }
-
+// Fetch all packages
+app.get('/api/packages', async (req, res) => {
     try {
-        const result = await orderRepo.setTtnForMultipleOrders(orders);
-        res.json(result);
+        const packages = await packageRepo.getAllPackages(); // Fetch all packages from the database
+        res.json(packages);
     } catch (error) {
-        console.error('Error updating TTNs:', error);
-        res.status(500).send('An error occurred');
+        console.error('Error fetching packages:', error.message);
+        res.status(500).send('An error occurred while fetching packages.');
     }
 });
 
 // Listen to all text messages
 bot.on('message', async (msg) => {
-    if (msg.text.toLowerCase().startsWith('bot_check_ttns')) {
-        try {
-            console.log(msg);
-            const documentList = await newPostApi.getDocumentList('04.04.2025', '05.05.2025');
-            documentList.forEach(async (shipment) => {
-                const order = await orderRepo.findOrderByCustomerPhone(shipment.customer_phone);
-                if (order) {
-                    await orderRepo.changeOrderNovaPostTtnByCustomerPhone(order.customer_phone, shipment.nova_post_ttn);
-                    bot.sendMessage(order.telegram_chat_id, 'Here is your TTN ' + shipment.nova_post_ttn, {
-                        reply_to_message_id: order.telegram_message_id
-                      });
-                }
-            });
-        } catch (error) {
-            console.error('Error:', error.message);
-        }
-      }
-      
-    const order = orderMessageConverter.convert(msg);
-    if (!order.customer_phone) {
-        return;
-    }
-    orderRepo.saveOrder(order);
+    await messageProcessor.processMessage(msg);
 });
 
 bot.on('edited_message', (msg) => {

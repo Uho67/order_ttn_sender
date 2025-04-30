@@ -2,41 +2,83 @@ const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
 
 class PackageRepository {
-    /**
-     * Save a new package to the database.
-     * @param {Object} packageData - The package data to save.
-     * @returns {Object} - The saved package.
-     */
-    async savePackage(packageData) {
+
+    async setIsSentToChatTrueByOrderId(orderId) {
         try {
-            const savedPackage = await prisma.package.create({
-                data: packageData,
+            const updatedPackages = await prisma.package.updateMany({
+                where: { orderId: orderId },
+                data: { isSentToChat: true },
             });
-            return savedPackage;
+
+            if (updatedPackages.count > 0) {
+                console.log(`isSentToChat set to true for packages with orderId: ${orderId}`);
+                return updatedPackages;
+            } else {
+                console.log(`No packages found for orderId: ${orderId}`);
+                return null;
+            }
         } catch (error) {
-            console.error('Error saving package:', error);
+            console.error('Error setting isSentToChat to true:', error);
             throw error;
         }
     }
 
-    /**
-     * Find a package by its Telegram message ID.
-     * @param {string} telegramMessageId - The Telegram message ID.
-     * @returns {Object|null} - The found package or null if not found.
-     */
-    async findPackageByTelegramMessageId(telegramMessageId) {
+    async getAllPackages() {
         try {
-            const package = await prisma.package.findUnique({
-                where: {
-                    telegram_message_id: telegramMessageId,
-                },
-            });
-            return package;
+            return await prisma.package.findMany({});
         } catch (error) {
-            console.error('Error finding package by Telegram message ID:', error);
+            console.error('Error fetching all packages:', error);
             throw error;
         }
     }
+
+    async savePackage(packageData) {
+        try {
+            // Check if a package with the same TTN already exists
+            const existingPackage = await prisma.package.findFirst({
+                where: { ttn: packageData.ttn },
+            });
+
+            if (existingPackage) {
+                // Update the existing package
+                const updatedPackage = await prisma.package.update({
+                    where: { id: existingPackage.id },
+                    data: packageData,
+                });
+                console.log(`Package with TTN ${packageData.ttn} updated.`);
+                return updatedPackage;
+            } else {
+                // Create a new package if none exists
+                const newPackage = await prisma.package.create({
+                    data: packageData,
+                });
+                console.log(`New package with TTN ${packageData.ttn} created.`);
+                return newPackage;
+            }
+        } catch (error) {
+            console.error('Error saving or updating package:', error);
+            throw error;
+        }
+    }
+
+        /**
+     * Find one package by Order ID.
+     * @param {number} orderId - The Order ID.
+     * @returns {Object|null} - The first package associated with the given Order ID, or null if not found.
+     */
+        async findOnePackageByOrderId(orderId) {
+            try {
+                const foundPackage = await prisma.package.findFirst({
+                    where: {
+                        orderId: orderId,
+                    },
+                });
+                return foundPackage;
+            } catch (error) {
+                console.error('Error finding package by Order ID:', error);
+                throw error;
+            }
+        }
 
     /**
      * Search for all non-sent packages.

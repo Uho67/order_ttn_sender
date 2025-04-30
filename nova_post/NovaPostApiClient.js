@@ -1,6 +1,8 @@
 const axios = require('axios');
 
 class NovaPostApiClient {
+
+    
     /**
      * Fetch the document list from Nova Poshta.
      * @param {string} dateTimeFrom - The start date for the document list (format: DD.MM.YYYY).

@@ -21,7 +21,7 @@ model Package {
   id                 Int      @id @default(autoincrement())
   ttn                String
   isSentToChat       Boolean  @default(false)
-  telegram_message_id String
   createdAt          DateTime @default(now())
-  updatedAt          DateTime @updatedAt
+  orderId            Int      // Foreign key to Order
 }
+
