@@ -5,12 +5,8 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="427afa61-30ba-4660-a217-7921f80fd295" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/fe_part/src/App.vue" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/fe_part/src/components/HelloWorld.vue" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/fe_part/src/components/NovaPostConnection.vue" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/fe_part/src/components/OrdersComponent.vue" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend_part/order_ttn_sender_copilot_vue" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/prisma/schema.prisma" beforeDir="false" afterPath="$PROJECT_DIR$/prisma/schema.prisma" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -71,7 +67,7 @@
       <option name="presentableId" value="Default" />
       <updated>1745698851140</updated>
       <workItem from="1745698852403" duration="1910000" />
-      <workItem from="1746044789873" duration="727000" />
+      <workItem from="1746044789873" duration="2587000" />
     </task>
     <servers />
   </component>

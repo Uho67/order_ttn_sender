@@ -2,27 +2,50 @@ const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
 
 class ConfigManager {
+     /**
+     * Save or update a configuration by its path.
+     * @param {string} config_path - The path of the configuration.
+     * @param {string} config_value - The value of the configuration.
+     * @returns {Promise<void>}
+     */
+        async saveConfig(config_path, config_value) {
+            try {
+                await prisma.configs.upsert({
+                    where: { config_path },
+                    update: { config_value },
+                    create: { config_path, config_value },
+                });
+                console.log(`Configuration saved: ${config_path} = ${config_value}`);
+            } catch (error) {
+                console.error(`Error saving configuration for path "${config_path}":`, error.message);
+                throw error;
+            }
+        }
+
+    
+
+
     /**
      * Get the value of a configuration by its path.
-     * @param {string} path - The path of the configuration.
+     * @param {string} config_path - The path of the configuration.
      * @returns {Promise<string|null>} - The value of the configuration, or null if not found.
      */
-    async getValueByPath(path) {
+    async getValueByPath(config_path) {
         try {
-            const config = await prisma.configuration.findUnique({
+            const config = await prisma.configs.findUnique({
                 where: {
-                    path: path,
+                    config_path: config_path,
                 },
             });
 
             if (config) {
-                return config.value;
+                return config.config_value;
             } else {
-                console.warn(`Configuration with path "${path}" not found.`);
+                console.warn(`Configuration with path "${config_path}" not found.`);
                 return null;
             }
         } catch (error) {
-            console.error(`Error fetching configuration for path "${path}":`, error.message);
+            console.error(`Error fetching configuration for path "${config_path}":`, error.message);
             throw error;
         }
     }
@@ -34,7 +57,7 @@ class ConfigManager {
      */
         async getValuesByPartialPath(partialPath) {
             try {
-                const configs = await prisma.configuration.findMany({
+                const configs = await prisma.config.findMany({
                     where: {
                         path: {
                             contains: partialPath, // Matches paths containing the partialPath
@@ -60,7 +83,7 @@ class ConfigManager {
      */
     async getValuesByPartialPath(partialPath) {
         try {
-            const configs = await prisma.configuration.findMany({
+            const configs = await prisma.config.findMany({
                 where: {
                     path: {
                         contains: partialPath, // Matches paths containing the partialPath

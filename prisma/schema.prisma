@@ -7,6 +7,12 @@ generator client {
   provider = "prisma-client-js"
 }
 
+model Configs {
+  config_path        String   @id @unique // Make ttn unique
+  config_value       String
+  createdAt          DateTime @default(now())
+}
+
 model Order {
   id                 Int      @id @default(autoincrement())
   telegram_chat_id   String
@@ -25,3 +31,8 @@ model Package {
   orderId            Int      // Foreign key to Order
 }
 
+model NovaPostConnection {
+  name               String   @id @unique
+  token              String
+  createdAt          DateTime @default(now())
+}

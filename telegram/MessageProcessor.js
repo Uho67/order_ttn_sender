@@ -1,12 +1,14 @@
 class MessageProcessor {
-    constructor(bot, orderRepo, newPostApi, orderMessageConverter) {
+    constructor(bot, orderRepo, newPostApi, orderMessageConverter, packageRepo) {
         this.bot = bot;
         this.orderRepo = orderRepo;
         this.newPostApi = newPostApi;
         this.orderMessageConverter = orderMessageConverter;
+        this.packageRepo = packageRepo;
     }
 
     async processMessage(msg) {
+        console.log(msg)
         if (msg.text.toLowerCase().startsWith('bot_check_ttns')) {
             await this.handleCheckTtns(msg);
         } else {

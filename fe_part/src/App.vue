@@ -61,34 +61,51 @@
     </div>
 
     <div v-if="activeTab === 'telegramConnection'">
-      <h2>Telegram Connection</h2>
-      <form @submit.prevent="connectTelegram">
-        <label>
-          API Name:
-          <input v-model="telegramConnection.apiName" required />
-        </label>
-        <label>
-          API Secret:
-          <input v-model="telegramConnection.apiSecret" required />
-        </label>
-        <button type="submit">Connect</button>
-      </form>
-    </div>
+    <h2>Telegram Connection</h2>
+    <form @submit.prevent="connectTelegram">
+      <label>
+        API Token:
+        <input v-model="telegramConnection.apiToken" required />
+      </label>
+      <button type="submit">Set telegram token</button>
+    </form>
+  </div>
 
     <div v-if="activeTab === 'novaPostConnection'">
       <h2>Nova Post Connection</h2>
-      <form @submit.prevent="connectNovaPost">
-        <label>
-          Token Nova Posta:
-          <input v-model="novaPostToken" required />
-        </label>
-        <button type="submit">Connect</button>
-      </form>
+      <form @submit.prevent="saveNovaPostConnection">
+      <div>
+        <label for="connectionName">Connection Name:</label>
+        <input
+          id="connectionName"
+          v-model="novaPostConnection.name"
+          type="text"
+          required
+        />
+      </div>
+      <div>
+        <label for="novaPostToken">Nova Post Token:</label>
+        <input
+          id="novaPostToken"
+          v-model="novaPostConnection.token"
+          type="text"
+          required
+        />
+      </div>
+      <button type="submit">Save</button>
+    </form>
+
+    <div v-if="responseMessage">
+      <h2>Response</h2>
+      <p>{{ responseMessage }}</p>
+    </div>
     </div>
   </div>
 </template>
 
 <script>
+import axios from 'axios';
+
 export default {
   data() {
     return {
@@ -99,6 +116,11 @@ export default {
         apiName: '',
         apiSecret: ''
       },
+      novaPostConnection: {
+        name: '',
+        token: '',
+      },
+      responseMessage: '',
       novaPostToken: ''
     };
   },
@@ -112,20 +134,40 @@ export default {
       this.packages = await response.json();
     },
     async connectTelegram() {
-      await fetch('http://localhost:3000/api/telegram_connection', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(this.telegramConnection)
-      });
-      alert('Telegram connection configured successfully!');
+      try {
+        const response = await axios.post('http://localhost:3000/api/configuration', {
+          config_path: 'TELEGRAM_CONFIG_API_TOKEN_FOR_BOT',
+          value: this.telegramConnection.apiToken,
+        });
+        alert('Telegram API Token configured successfully!');
+        console.log(response.data);
+      } catch (error) {
+        console.error('Error configuring Telegram API Token:', error);
+        alert('Failed to configure Telegram API Token.');
+      }
     },
-    async connectNovaPost() {
-      await fetch('http://localhost:3000/api/new_post_connection', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ token: this.novaPostToken })
-      });
-      alert('Nova Post connection configured successfully!');
+    async saveNovaPostConnection() {
+      try {
+        const response = await fetch('http://localhost:3000/api/novaPostConnections', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(this.novaPostConnection),
+        });
+
+        if (!response.ok) {
+          throw new Error('Failed to save Nova Post Connection');
+        }
+
+        const data = await response.json();
+        console.log(data);
+        this.responseMessage = 'Nova Post Connection saved successfully!';
+        this.novaPostConnection.connectionName = '';
+        this.novaPostConnection.novaPostToken = '';
+      } catch (error) {
+        this.responseMessage = error.message;
+      }
     }
   },
   mounted() {

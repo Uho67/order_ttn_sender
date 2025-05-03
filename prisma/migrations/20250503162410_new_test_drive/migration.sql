@@ -1,0 +1,7 @@
+-- CreateTable
+CREATE TABLE "Drive" (
+    "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+    "ttn" TEXT NOT NULL,
+    "ttn_value" TEXT NOT NULL,
+    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+);

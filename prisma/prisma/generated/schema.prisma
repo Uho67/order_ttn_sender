@@ -1,0 +1,43 @@
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "./prisma/generated"
+}
+
+model Order {
+  id                  Int      @id @default(autoincrement())
+  telegram_chat_id    String
+  telegram_message_id String
+  customer_phone      String
+  nova_post_ttn       String?
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+}
+
+model Package {
+  id           Int      @id @default(autoincrement())
+  ttn          String
+  isSentToChat Boolean  @default(false)
+  createdAt    DateTime @default(now())
+  orderId      Int // Foreign key to Order
+}
+
+model Post {
+  id        Int      @id @default(autoincrement())
+  path      String   @unique // Unique path for the configuration
+  value     String // Value of the configuration
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model nova_post_connections {
+  id        Int      @id @default(autoincrement())
+  name      String // The name of the Nova Post connection
+  apiKey    String // The API key for authentication
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}

@@ -8,12 +8,12 @@ class ConnectionRepository {
      * @param {string} apiKey - The API key for the connection.
      * @returns {Promise<Object>} - The created connection.
      */
-    async addConnection(name, apiKey) {
+    async addConnection(name, token) {
         try {
             const connection = await prisma.novaPostConnection.create({
                 data: {
                     name: name,
-                    apiKey: apiKey,
+                    token: token,
                 },
             });
             console.log('New Nova Post connection added:', connection);
