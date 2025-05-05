@@ -1,186 +1,161 @@
 <template>
   <div id="app">
     <h1>Admin Panel</h1>
-    <div class="tabs">
-      <button @click="activeTab = 'orders'">Orders</button>
-      <button @click="activeTab = 'packages'">Packages</button>
-      <button @click="activeTab = 'telegramConnection'">Telegram Connection</button>
-      <button @click="activeTab = 'novaPostConnection'">Nova Post Connection</button>
-    </div>
-
-    <div v-if="activeTab === 'orders'">
-      <h2>Orders</h2>
-      <table>
-        <thead>
-          <tr>
-            <th>ID</th>
-            <th>Telegram Chat ID</th>
-            <th>Telegram Message ID</th>
-            <th>Customer Phone</th>
-            <th>Nova Post TTN</th>
-            <th>Created At</th>
-            <th>Updated At</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-for="order in orders" :key="order.id">
-            <td>{{ order.id }}</td>
-            <td>{{ order.telegram_chat_id }}</td>
-            <td>{{ order.telegram_message_id }}</td>
-            <td>{{ order.customer_phone }}</td>
-            <td>{{ order.nova_post_ttn }}</td>
-            <td>{{ order.createdAt }}</td>
-            <td>{{ order.updatedAt }}</td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
-
-    <div v-if="activeTab === 'packages'">
-      <h2>Packages</h2>
-      <table>
-        <thead>
-          <tr>
-            <th>ID</th>
-            <th>TTN</th>
-            <th>Sent to Chat</th>
-            <th>Created At</th>
-            <th>Order ID</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-for="packageItem in packages" :key="packageItem.id">
-            <td>{{ packageItem.id }}</td>
-            <td>{{ packageItem.ttn }}</td>
-            <td>{{ packageItem.isSentToChat }}</td>
-            <td>{{ packageItem.createdAt }}</td>
-            <td>{{ packageItem.orderId }}</td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
-
-    <div v-if="activeTab === 'telegramConnection'">
-    <h2>Telegram Connection</h2>
-    <form @submit.prevent="connectTelegram">
-      <label>
-        API Token:
-        <input v-model="telegramConnection.apiToken" required />
-      </label>
-      <button type="submit">Set telegram token</button>
-    </form>
-  </div>
-
-    <div v-if="activeTab === 'novaPostConnection'">
-      <h2>Nova Post Connection</h2>
-      <form @submit.prevent="saveNovaPostConnection">
-      <div>
-        <label for="connectionName">Connection Name:</label>
-        <input
-          id="connectionName"
-          v-model="novaPostConnection.name"
-          type="text"
-          required
-        />
+    
+    <!-- Auth Section -->
+    <div v-if="!isAuthenticated" class="auth-section">
+      <div class="auth-tabs">
+        <button 
+          :class="{ active: activeAuthTab === 'login' }" 
+          @click="activeAuthTab = 'login'"
+        >
+          Login
+        </button>
+        <button 
+          :class="{ active: activeAuthTab === 'register' }" 
+          @click="activeAuthTab = 'register'"
+        >
+          Register
+        </button>
       </div>
-      <div>
-        <label for="novaPostToken">Nova Post Token:</label>
-        <input
-          id="novaPostToken"
-          v-model="novaPostConnection.token"
-          type="text"
-          required
-        />
-      </div>
-      <button type="submit">Save</button>
-    </form>
-
-    <div v-if="responseMessage">
-      <h2>Response</h2>
-      <p>{{ responseMessage }}</p>
+      
+      <LoginForm 
+        v-if="activeAuthTab === 'login'" 
+        @login-success="handleLoginSuccess"
+      />
+      <RegisterForm 
+        v-if="activeAuthTab === 'register'" 
+        @register-success="handleRegisterSuccess"
+      />
     </div>
+
+    <!-- Main Content (Protected) -->
+    <div v-else>
+      <div class="user-info">
+        Welcome, {{ currentUser.name || currentUser.email }}!
+        <button @click="handleLogout" class="logout-btn">Logout</button>
+      </div>
+
+      <div class="tabs">
+        <button @click="activeTab = 'orders'">Orders</button>
+        <button @click="activeTab = 'packages'">Packages</button>
+        <button @click="activeTab = 'telegramConnection'">Telegram Connection</button>
+        <button @click="activeTab = 'novaPostConnection'">Nova Post Connection</button>
+      </div>
+
+      <OrdersComponent v-if="activeTab === 'orders'" />
+      <PackagesComponent v-if="activeTab === 'packages'" />
+      <TelegramConnectionComponent v-if="activeTab === 'telegramConnection'" />
+      <NovaPostConnectionComponent v-if="activeTab === 'novaPostConnection'" />
     </div>
   </div>
 </template>
 
 <script>
-import axios from 'axios';
+import OrdersComponent from './components/OrdersComponent.vue'
+import PackagesComponent from './components/PackagesComponent.vue'
+import TelegramConnectionComponent from './components/TelegramConnectionComponent.vue'
+import NovaPostConnectionComponent from './components/NovaPostConnection.vue'
+import LoginForm from './components/LoginForm.vue'
+import RegisterForm from './components/RegisterForm.vue'
 
 export default {
+  components: {
+    OrdersComponent,
+    PackagesComponent,
+    TelegramConnectionComponent,
+    NovaPostConnectionComponent,
+    LoginForm,
+    RegisterForm
+  },
   data() {
     return {
       activeTab: 'orders',
-      orders: [],
-      packages: [],
-      telegramConnection: {
-        apiName: '',
-        apiSecret: ''
-      },
-      novaPostConnection: {
-        name: '',
-        token: '',
-      },
-      responseMessage: '',
-      novaPostToken: ''
-    };
-  },
-  methods: {
-    async fetchOrders() {
-      const response = await fetch('http://localhost:3000/api/orders');
-      this.orders = await response.json();
-    },
-    async fetchPackages() {
-      const response = await fetch('http://localhost:3000/api/packages');
-      this.packages = await response.json();
-    },
-    async connectTelegram() {
-      try {
-        const response = await axios.post('http://localhost:3000/api/configuration', {
-          config_path: 'TELEGRAM_CONFIG_API_TOKEN_FOR_BOT',
-          value: this.telegramConnection.apiToken,
-        });
-        alert('Telegram API Token configured successfully!');
-        console.log(response.data);
-      } catch (error) {
-        console.error('Error configuring Telegram API Token:', error);
-        alert('Failed to configure Telegram API Token.');
-      }
-    },
-    async saveNovaPostConnection() {
-      try {
-        const response = await fetch('http://localhost:3000/api/novaPostConnections', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(this.novaPostConnection),
-        });
-
-        if (!response.ok) {
-          throw new Error('Failed to save Nova Post Connection');
-        }
-
-        const data = await response.json();
-        console.log(data);
-        this.responseMessage = 'Nova Post Connection saved successfully!';
-        this.novaPostConnection.connectionName = '';
-        this.novaPostConnection.novaPostToken = '';
-      } catch (error) {
-        this.responseMessage = error.message;
-      }
+      activeAuthTab: 'login',
+      isAuthenticated: false,
+      currentUser: null
     }
   },
-  mounted() {
-    this.fetchOrders();
-    this.fetchPackages();
+  created() {
+    // Check if user is already logged in
+    const token = localStorage.getItem('token')
+    const user = localStorage.getItem('user')
+    if (token && user) {
+      this.isAuthenticated = true
+      this.currentUser = JSON.parse(user)
+    }
+  },
+  methods: {
+    handleLoginSuccess(user) {
+      this.isAuthenticated = true
+      this.currentUser = user
+    },
+    handleRegisterSuccess(user) {
+      this.isAuthenticated = true
+      this.currentUser = user
+    },
+    handleLogout() {
+      localStorage.removeItem('token')
+      localStorage.removeItem('user')
+      this.isAuthenticated = false
+      this.currentUser = null
+    }
   }
-};
+}
 </script>
 
 <style>
 .tabs button {
   margin-right: 10px;
 }
+
+.auth-section {
+  max-width: 400px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+.auth-tabs {
+  display: flex;
+  margin-bottom: 20px;
+}
+
+.auth-tabs button {
+  flex: 1;
+  padding: 10px;
+  border: none;
+  background: #f0f0f0;
+  cursor: pointer;
+}
+
+.auth-tabs button.active {
+  background: #007bff;
+  color: white;
+}
+
+.user-info {
+  margin-bottom: 20px;
+  padding: 10px;
+  background: #f8f9fa;
+  border-radius: 4px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.logout-btn {
+  padding: 5px 10px;
+  background: #dc3545;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.logout-btn:hover {
+  background: #c82333;
+}
+
 table {
   width: 100%;
   border-collapse: collapse;

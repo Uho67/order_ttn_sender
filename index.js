@@ -9,6 +9,8 @@ const TelegramBotService = require('./telegram/TelegramBot');
 const TelegramMessageConverter = require('./telegram/TelegramMessageConverter');
 const connectionRepo = require('./nova_post/ConnectionRepository');
 const ConfigManager = require('./general/ConfigManager'); // Import ConfigManager
+const authMiddleware = require('./middleware/auth');
+const authRoutes = require('./routes/auth');
 
 const newPostApi = new NovaPostApiClient();  // Import the class
 const app = express();
@@ -19,6 +21,8 @@ const orderMessageConverter = new TelegramMessageConverter();
 
 app.use(cors());
 app.use(bodyParser.json());
+// Serve static files from the 'public' directory
+app.use(express.static('public'));
 
 // Welcome route
 app.get('/', (req, res) => {
@@ -73,19 +77,19 @@ app.get('/api/novaPostConnections', async (req, res) => {
 });
 
 // Delete a Nova Post connection by ID
-app.delete('/api/novaPostConnections/:id', async (req, res) => {
+app.delete('/api/novaPostConnections/:name', async (req, res) => {
     try {
-        const { id } = req.params;
+        const { name } = req.params;
 
-        if (!id) {
-            return res.status(400).send('Connection ID is required.');
+        if (!name) {
+            return res.status(400).send('Connection name is required.');
         }
 
-        const deletedConnection = await connectionRepo.deleteConnectionById(parseInt(id, 10));
+        const deletedConnection = await connectionRepo.deleteConnectionByName(name);
         res.json(deletedConnection);
     } catch (error) {
-        console.error(`Error deleting Nova Post connection with ID ${req.params.id}:`, error.message);
-        res.status(500).send('An error occurred while deleting the Nova Post connection.');
+        logError('deleteConnectionByName', error);
+        throw error;
     }
 });
 
@@ -122,6 +126,13 @@ TelegramBotService.initializeBot().then((bot) => {
         orderRepo.changeOrderCustomerPhoneByTelegramMessageId(order.telegram_message_id, order.customer_phone);
     });
 })
+
+app.use('/api/auth', authRoutes);
+
+app.use('/api/configuration', authMiddleware);
+app.use('/api/novaPostConnections', authMiddleware);
+app.use('/api/orders', authMiddleware);
+app.use('/api/packages', authMiddleware);
 
 // Start the server
 app.listen(3000, () => {
