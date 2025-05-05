@@ -2,6 +2,11 @@
 
 ## Description
 A brief description of the project goes here. Explain the purpose and functionality of the application.
+Main reason of creating :
+  1 . team sell products and send orders to telegram chanel
+  2 . store sends orders with Nova post
+  3 . team should check if order is sent or not + ttn of orders
+  So the codebase gets orders save them and map with ttn from nova posts, sends ttn to telegram chanel as response on order message
 
 ## Features
 - List key features of the project.

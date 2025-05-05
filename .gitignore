@@ -5,6 +5,6 @@ frontend_part/order_ttn_sender_copilot_vue/node_modules
 frontend_part/order_ttn_sender_copilot_vue/.env
 frontend_part/order_ttn_sender_copilot_vue/dist
 prisma/dev.db
-.idea/workspace.xml
+.idea/*
 # Ignore build artifacts
-build   
+build
