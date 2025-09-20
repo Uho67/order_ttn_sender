@@ -58,6 +58,26 @@ class ConnectionRepository {
             throw error;
         }
     }
+
+    /**
+     * Delete a Nova Post connection by name.
+     * @param {string} name - The name of the connection to delete.
+     * @returns {Promise<Object>} - The deleted connection.
+     */
+    async deleteConnectionByName(name) {
+        try {
+            const deletedConnection = await prisma.novaPostConnection.delete({
+                where: {
+                    name: name,
+                },
+            });
+            console.log(`Nova Post connection with name ${name} deleted:`, deletedConnection);
+            return deletedConnection;
+        } catch (error) {
+            console.error(`Error deleting Nova Post connection with name ${name}:`, error.message);
+            throw error;
+        }
+    }
 }
 
 module.exports = new ConnectionRepository();

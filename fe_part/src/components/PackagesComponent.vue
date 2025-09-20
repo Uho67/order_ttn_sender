@@ -1,38 +1,34 @@
 <template>
   <div>
-    <h2>Orders</h2>
+    <h2>Packages</h2>
     <div v-if="error" class="error-message">
       {{ error }}
     </div>
     <div v-if="loading" class="loading">
-      Loading orders...
+      Loading packages...
     </div>
-    <table v-else-if="orders.length > 0">
+    <table v-else-if="packages.length > 0">
       <thead>
         <tr>
           <th>ID</th>
-          <th>Telegram Chat ID</th>
-          <th>Telegram Message ID</th>
-          <th>Customer Phone</th>
-          <th>Nova Post TTN</th>
+          <th>TTN</th>
+          <th>Sent to Chat</th>
           <th>Created At</th>
-          <th>Updated At</th>
+          <th>Order ID</th>
         </tr>
       </thead>
       <tbody>
-        <tr v-for="order in orders" :key="order.id">
-          <td>{{ order.id }}</td>
-          <td>{{ order.telegram_chat_id }}</td>
-          <td>{{ order.telegram_message_id }}</td>
-          <td>{{ order.customer_phone }}</td>
-          <td>{{ order.nova_post_ttn }}</td>
-          <td>{{ order.createdAt }}</td>
-          <td>{{ order.updatedAt }}</td>
+        <tr v-for="packageItem in packages" :key="packageItem.id">
+          <td>{{ packageItem.id }}</td>
+          <td>{{ packageItem.ttn }}</td>
+          <td>{{ packageItem.isSentToChat }}</td>
+          <td>{{ packageItem.createdAt }}</td>
+          <td>{{ packageItem.orderId }}</td>
         </tr>
       </tbody>
     </table>
     <div v-else class="no-data">
-      No orders found.
+      No packages found.
     </div>
   </div>
 </template>
@@ -43,30 +39,30 @@ import apiConfig from '../config/api.js';
 export default {
   data() {
     return {
-      orders: [],
+      packages: [],
       loading: false,
       error: null
     };
   },
   methods: {
-    async fetchOrders() {
+    async fetchPackages() {
       this.loading = true;
       this.error = null;
       
       try {
-        const response = await fetch(`${apiConfig.API_BASE_URL}/api/orders`, {
+        const response = await fetch(`${apiConfig.API_BASE_URL}/api/packages`, {
           headers: {
             'Content-Type': 'application/json'
           }
         });
         
         if (!response.ok) {
-          throw new Error(`Failed to fetch orders: ${response.status}`);
+          throw new Error(`Failed to fetch packages: ${response.status}`);
         }
         
-        this.orders = await response.json();
+        this.packages = await response.json();
       } catch (error) {
-        console.error('Error fetching orders:', error);
+        console.error('Error fetching packages:', error);
         this.error = error.message;
       } finally {
         this.loading = false;
@@ -74,7 +70,7 @@ export default {
     }
   },
   mounted() {
-    this.fetchOrders();
+    this.fetchPackages();
   }
 };
 </script>
