@@ -1,4 +1,4 @@
-const API_BASE_URL = 'http://localhost:3010';
+const API_BASE_URL = process.env.VUE_APP_API_URL || 'http://localhost:3010';
 
 // Debug logging
 console.log('Environment VUE_APP_API_URL:', process.env.VUE_APP_API_URL);
