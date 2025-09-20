@@ -67,7 +67,7 @@ class MessageProcessor {
 
         // Устанавливаем время 23:55 для обеих дат
         today.setHours(23, 55, 0, 0);
-        yesterday.setDate(now.getDate() - 2);
+        yesterday.setDate(now.getDate() - 1);
         yesterday.setHours(23, 55, 0, 0);
 
         // Форматируем даты в формат DD.MM.YYYY

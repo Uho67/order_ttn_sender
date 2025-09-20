@@ -5,9 +5,13 @@
   "main": "index.js",
   "scripts": {
     "dev": "nodemon index.js",
-    "prisma:migrate": "npx prisma migrate dev --name init",
+    "start": "node index.js",
+    "build": "npm run prisma:generate && cd fe_part && npm run build",
+    "prisma:migrate": "npx prisma migrate deploy",
     "prisma:generate": "npx prisma generate",
-    "prisma:studio": "npx prisma studio"
+    "prisma:studio": "npx prisma studio",
+    "postinstall": "npm run prisma:generate",
+    "cleanup": "node -e \"require('./services/cleanup.service').cleanupOldOrders()\""
   },
   "keywords": [],
   "author": "",
@@ -20,6 +24,7 @@
     "dotenv": "^16.5.0",
     "express": "^5.1.0",
     "jsonwebtoken": "^9.0.2",
+    "node-cron": "^3.0.3",
     "node-telegram-bot-api": "^0.66.0",
     "sqlite3": "^5.1.7"
   },
