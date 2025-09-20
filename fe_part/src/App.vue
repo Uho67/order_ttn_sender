@@ -2,40 +2,8 @@
   <div id="app">
     <h1>Admin Panel</h1>
     
-    <!-- Auth Section -->
-    <div v-if="!isAuthenticated" class="auth-section">
-      <div class="auth-tabs">
-        <button 
-          :class="{ active: activeAuthTab === 'login' }" 
-          @click="activeAuthTab = 'login'"
-        >
-          Login
-        </button>
-        <button 
-          :class="{ active: activeAuthTab === 'register' }" 
-          @click="activeAuthTab = 'register'"
-        >
-          Register
-        </button>
-      </div>
-      
-      <LoginForm 
-        v-if="activeAuthTab === 'login'" 
-        @login-success="handleLoginSuccess"
-      />
-      <RegisterForm 
-        v-if="activeAuthTab === 'register'" 
-        @register-success="handleRegisterSuccess"
-      />
-    </div>
-
-    <!-- Main Content (Protected) -->
-    <div v-else>
-      <div class="user-info">
-        Welcome, {{ currentUser.name || currentUser.email }}!
-        <button @click="handleLogout" class="logout-btn">Logout</button>
-      </div>
-
+    <!-- Main Content (No Auth Required) -->
+    <div>
       <div class="tabs">
         <button @click="activeTab = 'orders'">Orders</button>
         <button @click="activeTab = 'packages'">Packages</button>
@@ -56,17 +24,13 @@ import OrdersComponent from './components/OrdersComponent.vue'
 import PackagesComponent from './components/PackagesComponent.vue'
 import TelegramConnectionComponent from './components/TelegramConnectionComponent.vue'
 import NovaPostConnectionComponent from './components/NovaPostConnection.vue'
-import LoginForm from './components/LoginForm.vue'
-import RegisterForm from './components/RegisterForm.vue'
 
 export default {
   components: {
     OrdersComponent,
     PackagesComponent,
     TelegramConnectionComponent,
-    NovaPostConnectionComponent,
-    LoginForm,
-    RegisterForm
+    NovaPostConnectionComponent
   },
   data() {
     return {

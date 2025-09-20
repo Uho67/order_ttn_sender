@@ -27,6 +27,8 @@
 </template>
 
 <script>
+import apiConfig from '../config/api.js';
+
 export default {
   data() {
     return {
@@ -38,7 +40,7 @@ export default {
   methods: {
     async handleLogin() {
       try {
-        const response = await fetch('http://localhost:3000/api/auth/login', {
+        const response = await fetch(`${apiConfig.API_BASE_URL}/api/auth/login`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json'

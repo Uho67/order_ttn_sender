@@ -1,7 +1,13 @@
 <template>
   <div>
     <h2>Orders</h2>
-    <table>
+    <div v-if="error" class="error-message">
+      {{ error }}
+    </div>
+    <div v-if="loading" class="loading">
+      Loading orders...
+    </div>
+    <table v-else-if="orders.length > 0">
       <thead>
         <tr>
           <th>ID</th>
@@ -25,24 +31,50 @@
         </tr>
       </tbody>
     </table>
+    <div v-else class="no-data">
+      No orders found.
+    </div>
   </div>
 </template>
 
 <script>
+import apiConfig from '../config/api.js';
+
 export default {
   data() {
     return {
-      orders: [] // Stores the list of orders
+      orders: [],
+      loading: false,
+      error: null
     };
   },
   methods: {
     async fetchOrders() {
-      const response = await fetch('http://localhost:3000/api/orders');
-      this.orders = await response.json();
+      this.loading = true;
+      this.error = null;
+      
+      try {
+        const response = await fetch(`${apiConfig.API_BASE_URL}/api/orders`, {
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        });
+        
+        if (!response.ok) {
+          throw new Error(`Failed to fetch orders: ${response.status}`);
+        }
+        
+        this.orders = await response.json();
+      } catch (error) {
+        console.error('Error fetching orders:', error);
+        this.error = error.message;
+      } finally {
+        this.loading = false;
+      }
     }
   },
   mounted() {
-    this.fetchOrders(); // Fetch orders when the component is mounted
+    this.fetchOrders();
   }
 };
 </script>
@@ -76,5 +108,27 @@ tr:nth-child(even) {
 
 tr:hover {
   background-color: #f1f1f1;
+}
+
+.error-message {
+  color: #dc3545;
+  background-color: #f8d7da;
+  border: 1px solid #f5c6cb;
+  padding: 10px;
+  border-radius: 4px;
+  margin-bottom: 20px;
+}
+
+.loading {
+  text-align: center;
+  padding: 20px;
+  color: #6c757d;
+}
+
+.no-data {
+  text-align: center;
+  padding: 20px;
+  color: #6c757d;
+  font-style: italic;
 }
 </style>

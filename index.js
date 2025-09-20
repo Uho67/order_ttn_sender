@@ -118,9 +118,10 @@ app.get('/api/packages', async (req, res) => {
 TelegramBotService.initializeBot().then((bot) => {
     const messageProcessor = new MessageProcessor(bot, orderRepo, newPostApi, orderMessageConverter, packageRepo);
     bot.on('message', async (msg) => {
+        console.log('Received message:', msg);
         await messageProcessor.processMessage(msg);
     });
-    
+
     bot.on('edited_message', (msg) => {
         const order = orderMessageConverter.convert(msg);
         orderRepo.changeOrderCustomerPhoneByTelegramMessageId(order.telegram_message_id, order.customer_phone);
@@ -129,12 +130,14 @@ TelegramBotService.initializeBot().then((bot) => {
 
 app.use('/api/auth', authRoutes);
 
-app.use('/api/configuration', authMiddleware);
-app.use('/api/novaPostConnections', authMiddleware);
-app.use('/api/orders', authMiddleware);
-app.use('/api/packages', authMiddleware);
+// Remove auth middleware from these routes:
+// app.use('/api/configuration', authMiddleware);
+// app.use('/api/novaPostConnections', authMiddleware);
+// app.use('/api/orders', authMiddleware);
+// app.use('/api/packages', authMiddleware);
 
 // Start the server
-app.listen(3000, () => {
-    console.log('Server is running on http://localhost:3000');
+const PORT = process.env.PORT || 3000; // Default to 3000 if PORT not set
+app.listen(PORT, () => {
+    console.log(`Server is running on http://localhost:${PORT}`);
 });

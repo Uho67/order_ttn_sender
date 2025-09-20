@@ -1,76 +1,130 @@
 <template>
-    <div>
-      <h2>Packages</h2>
-      <table>
-        <thead>
-          <tr>
-            <th>ID</th>
-            <th>TTN</th>
-            <th>Sent to Chat</th>
-            <th>Created At</th>
-            <th>Order ID</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-for="packageItem in packages" :key="packageItem.id">
-            <td>{{ packageItem.id }}</td>
-            <td>{{ packageItem.ttn }}</td>
-            <td>{{ packageItem.isSentToChat }}</td>
-            <td>{{ packageItem.createdAt }}</td>
-            <td>{{ packageItem.orderId }}</td>
-          </tr>
-        </tbody>
-      </table>
+  <div>
+    <h2>Packages</h2>
+    <div v-if="error" class="error-message">
+      {{ error }}
     </div>
-  </template>
-  
-  <script>
-  export default {
-    data() {
-      return {
-        packages: []
-      };
-    },
-    methods: {
-      async fetchPackages() {
-        const response = await fetch('http://localhost:3000/api/packages');
+    <div v-if="loading" class="loading">
+      Loading packages...
+    </div>
+    <table v-else-if="packages.length > 0">
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>TTN</th>
+          <th>Sent to Chat</th>
+          <th>Created At</th>
+          <th>Order ID</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr v-for="packageItem in packages" :key="packageItem.id">
+          <td>{{ packageItem.id }}</td>
+          <td>{{ packageItem.ttn }}</td>
+          <td>{{ packageItem.isSentToChat }}</td>
+          <td>{{ packageItem.createdAt }}</td>
+          <td>{{ packageItem.orderId }}</td>
+        </tr>
+      </tbody>
+    </table>
+    <div v-else class="no-data">
+      No packages found.
+    </div>
+  </div>
+</template>
+
+<script>
+import apiConfig from '../config/api.js';
+
+export default {
+  data() {
+    return {
+      packages: [],
+      loading: false,
+      error: null
+    };
+  },
+  methods: {
+    async fetchPackages() {
+      this.loading = true;
+      this.error = null;
+      
+      try {
+        const response = await fetch(`${apiConfig.API_BASE_URL}/api/packages`, {
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        });
+        
+        if (!response.ok) {
+          throw new Error(`Failed to fetch packages: ${response.status}`);
+        }
+        
         this.packages = await response.json();
+      } catch (error) {
+        console.error('Error fetching packages:', error);
+        this.error = error.message;
+      } finally {
+        this.loading = false;
       }
-    },
-    mounted() {
-      this.fetchPackages();
     }
-  };
-  </script>
-  
-  <style scoped>
-  table {
-    width: 100%;
-    border-collapse: collapse;
-    margin-top: 20px;
-    background-color: #fff;
-    border-radius: 8px;
-    overflow: hidden;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  },
+  mounted() {
+    this.fetchPackages();
   }
-  
-  th, td {
-    border: 1px solid #ddd;
-    padding: 12px;
-    text-align: left;
-  }
-  
-  th {
-    background-color: #007bff;
-    color: white;
-    font-weight: bold;
-  }
-  
-  tr:nth-child(even) {
-    background-color: #f9f9f9;
-  }
-  
-  tr:hover {
-    background-color: #f1f1f1;
-  }
-  </style>
+};
+</script>
+
+<style scoped>
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 20px;
+  background-color: #fff;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+th, td {
+  border: 1px solid #ddd;
+  padding: 12px;
+  text-align: left;
+}
+
+th {
+  background-color: #007bff;
+  color: white;
+  font-weight: bold;
+}
+
+tr:nth-child(even) {
+  background-color: #f9f9f9;
+}
+
+tr:hover {
+  background-color: #f1f1f1;
+}
+
+.error-message {
+  color: #dc3545;
+  background-color: #f8d7da;
+  border: 1px solid #f5c6cb;
+  padding: 10px;
+  border-radius: 4px;
+  margin-bottom: 20px;
+}
+
+.loading {
+  text-align: center;
+  padding: 20px;
+  color: #6c757d;
+}
+
+.no-data {
+  text-align: center;
+  padding: 20px;
+  color: #6c757d;
+  font-style: italic;
+}
+</style>

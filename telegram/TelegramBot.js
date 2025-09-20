@@ -6,7 +6,7 @@ class TelegramBotService {
     async initializeBot() {
         try {
             // Get the Telegram API token from the configuration
-            const token = await ConfigManager.getValueByPath(process.env.TELEGRAM_CONFIG_API_TOKEN_FOR_BOT);
+            const token = process.env.TELEGRAM_CONFIG_API_TOKEN_FOR_BOT;
             if (!token) {
                 throw new Error('Telegram API token is not configured.');
             }

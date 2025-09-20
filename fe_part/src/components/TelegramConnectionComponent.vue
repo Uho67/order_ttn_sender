@@ -16,6 +16,7 @@
   
   <script>
   import axios from 'axios';
+  import apiConfig from '../config/api.js';
   
   export default {
     data() {
@@ -27,7 +28,7 @@
     methods: {
       async connectTelegram() {
         try {
-          const response = await axios.post('http://localhost:3000/api/configuration', {
+          const response = await axios.post(`${apiConfig.API_BASE_URL}/api/configuration`, {
             config_path: 'TELEGRAM_CONFIG_API_TOKEN_FOR_BOT',
             value: this.apiToken,
           });
