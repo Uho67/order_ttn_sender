@@ -12,6 +12,9 @@ const ConfigManager = require('./general/ConfigManager'); // Import ConfigManage
 const authMiddleware = require('./middleware/auth');
 const authRoutes = require('./routes/auth');
 
+// Import cron scheduler
+const { startAllCrons } = require('./cron/scheduler');
+
 const newPostApi = new NovaPostApiClient();  // Import the class
 const app = express();
 const orderRepo = new OrderRepository();
@@ -289,3 +292,7 @@ const PORT = process.env.PORT || 3000; // Default to 3000 if PORT not set
 app.listen(PORT, () => {
     console.log(`Server is running on http://localhost:${PORT}`);
 });
+
+// Start cron jobs
+console.log('Starting cron jobs...');
+startAllCrons();

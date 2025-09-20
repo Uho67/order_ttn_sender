@@ -223,6 +223,32 @@ class OrderRepository {
             throw error;
         }
     }
+
+    /**
+     * Delete orders older than specified days.
+     * @param {number} days - Number of days (default: 2).
+     * @returns {Object} - The result of the delete operation.
+     */
+    async deleteOldOrders(days = 2) {
+        try {
+            const cutoffDate = new Date();
+            cutoffDate.setDate(cutoffDate.getDate() - days);
+
+            const result = await prisma.order.deleteMany({
+                where: {
+                    createdAt: {
+                        lt: cutoffDate
+                    }
+                }
+            });
+
+            console.log(`${result.count} orders older than ${days} days deleted.`);
+            return result;
+        } catch (error) {
+            console.error('Error deleting old orders:', error);
+            throw error;
+        }
+    }
 }
 
 module.exports = OrderRepository;
