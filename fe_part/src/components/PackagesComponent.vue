@@ -15,6 +15,7 @@
           <th>Sent to Chat</th>
           <th>Created At</th>
           <th>Order ID</th>
+          <th>Actions</th>
         </tr>
       </thead>
       <tbody>
@@ -24,6 +25,11 @@
           <td>{{ packageItem.isSentToChat }}</td>
           <td>{{ packageItem.createdAt }}</td>
           <td>{{ packageItem.orderId }}</td>
+          <td>
+            <button @click="deletePackage(packageItem.id)" class="delete-btn">
+              Delete
+            </button>
+          </td>
         </tr>
       </tbody>
     </table>
@@ -66,6 +72,33 @@ export default {
         this.error = error.message;
       } finally {
         this.loading = false;
+      }
+    },
+    
+    async deletePackage(packageId) {
+      if (!confirm(`Are you sure you want to delete package ${packageId}?`)) {
+        return;
+      }
+      
+      try {
+        const response = await fetch(`${apiConfig.API_BASE_URL}/api/packages/${packageId}`, {
+          method: 'DELETE',
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        });
+        
+        if (!response.ok) {
+          throw new Error(`Failed to delete package: ${response.status}`);
+        }
+        
+        // Remove the package from the local array
+        this.packages = this.packages.filter(pkg => pkg.id !== packageId);
+        
+        console.log(`Package ${packageId} deleted successfully`);
+      } catch (error) {
+        console.error('Error deleting package:', error);
+        this.error = `Failed to delete package: ${error.message}`;
       }
     }
   },
@@ -126,5 +159,19 @@ tr:hover {
   padding: 20px;
   color: #6c757d;
   font-style: italic;
+}
+
+.delete-btn {
+  background-color: #dc3545;
+  color: white;
+  border: none;
+  padding: 5px 10px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
+}
+
+.delete-btn:hover {
+  background-color: #c82333;
 }
 </style>

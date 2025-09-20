@@ -104,6 +104,107 @@ app.get('/api/orders', async (req, res) => {
     }
 });
 
+// Delete an order by ID
+app.delete('/api/orders/:id', async (req, res) => {
+    try {
+        const orderId = parseInt(req.params.id);
+
+        if (!orderId || isNaN(orderId)) {
+            return res.status(400).send('Invalid order ID.');
+        }
+
+        const deletedOrder = await orderRepo.deleteOrderById(orderId);
+
+        if (deletedOrder) {
+            res.json({ message: 'Order deleted successfully', order: deletedOrder });
+        } else {
+            res.status(404).send('Order not found.');
+        }
+    } catch (error) {
+        console.error('Error deleting order:', error.message);
+        res.status(500).send('An error occurred while deleting the order.');
+    }
+});
+
+// Delete orders by customer phone
+app.delete('/api/orders/customer/:phone', async (req, res) => {
+    try {
+        const customerPhone = req.params.phone;
+
+        if (!customerPhone) {
+            return res.status(400).send('Customer phone is required.');
+        }
+
+        const result = await orderRepo.deleteOrdersByCustomerPhone(customerPhone);
+
+        if (result.count > 0) {
+            res.json({
+                message: `Successfully deleted ${result.count} orders for customer ${customerPhone}`,
+                deletedCount: result.count
+            });
+        } else {
+            res.status(404).send('No orders found for the specified customer phone.');
+        }
+    } catch (error) {
+        console.error('Error deleting orders by customer phone:', error.message);
+        res.status(500).send('An error occurred while deleting orders.');
+    }
+});
+
+// Delete orders by Telegram chat ID
+app.delete('/api/orders/telegram/:chatId', async (req, res) => {
+    try {
+        const telegramChatId = req.params.chatId;
+
+        if (!telegramChatId) {
+            return res.status(400).send('Telegram chat ID is required.');
+        }
+
+        const result = await orderRepo.deleteOrdersByTelegramChatId(telegramChatId);
+
+        if (result.count > 0) {
+            res.json({
+                message: `Successfully deleted ${result.count} orders for Telegram chat ${telegramChatId}`,
+                deletedCount: result.count
+            });
+        } else {
+            res.status(404).send('No orders found for the specified Telegram chat ID.');
+        }
+    } catch (error) {
+        console.error('Error deleting orders by Telegram chat ID:', error.message);
+        res.status(500).send('An error occurred while deleting orders.');
+    }
+});
+
+// Bulk delete orders by IDs
+app.delete('/api/orders/bulk', async (req, res) => {
+    try {
+        const { orderIds } = req.body;
+
+        if (!orderIds || !Array.isArray(orderIds) || orderIds.length === 0) {
+            return res.status(400).send('orderIds array is required and must not be empty.');
+        }
+
+        // Convert to integers and validate
+        const validOrderIds = orderIds.filter(id => !isNaN(parseInt(id))).map(id => parseInt(id));
+
+        if (validOrderIds.length === 0) {
+            return res.status(400).send('No valid order IDs provided.');
+        }
+
+        const result = await orderRepo.deleteOrdersByIds(validOrderIds);
+
+        res.json({
+            message: `Successfully deleted ${result.count} orders`,
+            deletedCount: result.count,
+            requestedCount: orderIds.length
+        });
+    } catch (error) {
+        console.error('Error bulk deleting orders:', error.message);
+        res.status(500).send('An error occurred while bulk deleting orders.');
+    }
+});
+
 // Fetch all packages
 app.get('/api/packages', async (req, res) => {
     try {
@@ -112,6 +213,53 @@ app.get('/api/packages', async (req, res) => {
     } catch (error) {
         console.error('Error fetching packages:', error.message);
         res.status(500).send('An error occurred while fetching packages.');
+    }
+});
+
+// Delete a package by ID
+app.delete('/api/packages/:id', async (req, res) => {
+    try {
+        const packageId = parseInt(req.params.id);
+
+        if (!packageId || isNaN(packageId)) {
+            return res.status(400).send('Invalid package ID.');
+        }
+
+        const deletedPackage = await packageRepo.deletePackageById(packageId);
+
+        if (deletedPackage) {
+            res.json({ message: 'Package deleted successfully', package: deletedPackage });
+        } else {
+            res.status(404).send('Package not found.');
+        }
+    } catch (error) {
+        console.error('Error deleting package:', error.message);
+        res.status(500).send('An error occurred while deleting the package.');
+    }
+});
+
+// Delete packages by Order ID
+app.delete('/api/packages/order/:orderId', async (req, res) => {
+    try {
+        const orderId = parseInt(req.params.orderId);
+
+        if (!orderId || isNaN(orderId)) {
+            return res.status(400).send('Invalid order ID.');
+        }
+
+        const result = await packageRepo.deletePackagesByOrderId(orderId);
+
+        if (result.count > 0) {
+            res.json({
+                message: `Successfully deleted ${result.count} packages for order ${orderId}`,
+                deletedCount: result.count
+            });
+        } else {
+            res.status(404).send('No packages found for the specified order ID.');
+        }
+    } catch (error) {
+        console.error('Error deleting packages by order ID:', error.message);
+        res.status(500).send('An error occurred while deleting packages.');
     }
 });
 

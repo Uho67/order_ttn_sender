@@ -97,6 +97,42 @@ class PackageRepository {
             throw error;
         }
     }
+
+    /**
+     * Delete a package by ID.
+     * @param {number} packageId - The package ID to delete.
+     * @returns {Object|null} - The deleted package, or null if not found.
+     */
+    async deletePackageById(packageId) {
+        try {
+            const deletedPackage = await prisma.package.delete({
+                where: { id: packageId },
+            });
+            console.log(`Package with ID ${packageId} deleted.`);
+            return deletedPackage;
+        } catch (error) {
+            console.error('Error deleting package:', error);
+            throw error;
+        }
+    }
+
+    /**
+     * Delete packages by Order ID.
+     * @param {number} orderId - The Order ID to delete packages for.
+     * @returns {Object} - The result of the delete operation.
+     */
+    async deletePackagesByOrderId(orderId) {
+        try {
+            const result = await prisma.package.deleteMany({
+                where: { orderId: orderId },
+            });
+            console.log(`${result.count} packages deleted for orderId: ${orderId}`);
+            return result;
+        } catch (error) {
+            console.error('Error deleting packages by Order ID:', error);
+            throw error;
+        }
+    }
 }
 
 module.exports = new PackageRepository();
