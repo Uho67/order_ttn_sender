@@ -3,7 +3,7 @@ const prisma = new PrismaClient();
 
 class CleanupService {
 	constructor() {
-		this.days = 2; // Delete orders older than 2 days
+		this.days = 5; // Delete orders older than 2 days
 	}
 
 	/**

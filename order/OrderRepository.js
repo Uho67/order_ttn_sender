@@ -141,6 +141,7 @@ class OrderRepository {
         try {
             return await prisma.order.findFirst({
                 where: { customer_phone: customerPhone },
+                orderBy: { createdAt: 'desc' }, // Get the newest order
             });
         } catch (error) {
             console.error('Error finding order by customer phone:', error);
