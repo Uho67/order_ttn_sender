@@ -10,87 +10,87 @@ class OrderRepository {
             throw error;
         }
     }
-  // 1. Save order
-  async saveOrder(order) {
-    if (!order.customer_phone) {
-        console.error('check fields please');
-       return {};
-    }
-
-    return await prisma.order.create({
-      data: order,
-    });
-  }
-
-  // 2. Find order by telegram_chat_id
-  async findOrderByTelegramChatId(telegramChatId) {
-    return await prisma.order.findFirst({
-      where: { telegram_chat_id: telegramChatId },
-    });
-  }
-
-  // 3. Find order by telegram_message_id
-  async findOrderByTelegramMessageId(telegramMessageId) {
-    return await prisma.order.findFirst({
-      where: { telegram_message_id: telegramMessageId },
-    });
-  }
-
-  /**
-     * Change the nova_post_ttn for an order by customer phone.
-     * If a package exists for the order, update its TTN.
-     * If no package exists, create a new package.
-     * @param {string} customerPhone - The customer's phone number.
-     * @param {string} novaPostTtn - The new Nova Post TTN.
-     * @returns {Object} - The updated or newly created package.
-     */
-  async changeOrderNovaPostTtnByCustomerPhone(customerPhone, novaPostTtn) {
-    try {
-        // Update the nova_post_ttn for the order
-        const updatedOrders = await prisma.order.updateMany({
-            where: { customer_phone: customerPhone },
-            data: { nova_post_ttn: novaPostTtn },
-        });
-
-        // Fetch the updated order to get its ID
-        const order = await prisma.order.findFirst({
-            where: { customer_phone: customerPhone },
-        });
-
-        if (!order) {
-            throw new Error(`Order with customer phone ${customerPhone} not found.`);
+    // 1. Save order
+    async saveOrder(order) {
+        if (!order.customer_phone) {
+            console.error('check fields please');
+            return {};
         }
 
-        // Check if a package exists for the order
-        const existingPackage = await prisma.package.findFirst({
-            where: { orderId: order.id },
+        return await prisma.order.create({
+            data: order,
         });
-
-        if (existingPackage) {
-            // Update the TTN of the existing package
-            const updatedPackage = await prisma.package.update({
-                where: { id: existingPackage.id },
-                data: { ttn: novaPostTtn },
-            });
-            console.log('Package updated:', updatedPackage);
-            return updatedPackage;
-        } else {
-            // Create a new package if none exists
-            const newPackage = await prisma.package.create({
-                data: {
-                    ttn: novaPostTtn,
-                    isSentToChat: false,
-                    orderId: order.id, // Associate the package with the order
-                },
-            });
-            console.log('New package created:', newPackage);
-            return newPackage;
-        }
-    } catch (error) {
-        console.error('Error updating nova_post_ttn and handling package:', error);
-        throw error;
     }
-}
+
+    // 2. Find order by telegram_chat_id
+    async findOrderByTelegramChatId(telegramChatId) {
+        return await prisma.order.findFirst({
+            where: { telegram_chat_id: telegramChatId },
+        });
+    }
+
+    // 3. Find order by telegram_message_id
+    async findOrderByTelegramMessageId(telegramMessageId) {
+        return await prisma.order.findFirst({
+            where: { telegram_message_id: telegramMessageId },
+        });
+    }
+
+    /**
+       * Change the nova_post_ttn for an order by customer phone.
+       * If a package exists for the order, update its TTN.
+       * If no package exists, create a new package.
+       * @param {string} customerPhone - The customer's phone number.
+       * @param {string} novaPostTtn - The new Nova Post TTN.
+       * @returns {Object} - The updated or newly created package.
+       */
+    async changeOrderNovaPostTtnByCustomerPhone(customerPhone, novaPostTtn) {
+        try {
+            // Update the nova_post_ttn for the order
+            const updatedOrders = await prisma.order.updateMany({
+                where: { customer_phone: customerPhone },
+                data: { nova_post_ttn: novaPostTtn },
+            });
+
+            // Fetch the updated order to get its ID
+            const order = await prisma.order.findFirst({
+                where: { customer_phone: customerPhone },
+            });
+
+            if (!order) {
+                throw new Error(`Order with customer phone ${customerPhone} not found.`);
+            }
+
+            // Check if a package exists for the order
+            const existingPackage = await prisma.package.findFirst({
+                where: { orderId: order.id },
+            });
+
+            if (existingPackage) {
+                // Update the TTN of the existing package
+                const updatedPackage = await prisma.package.update({
+                    where: { id: existingPackage.id },
+                    data: { ttn: novaPostTtn },
+                });
+                console.log('Package updated:', updatedPackage);
+                return updatedPackage;
+            } else {
+                // Create a new package if none exists
+                const newPackage = await prisma.package.create({
+                    data: {
+                        ttn: novaPostTtn,
+                        isSentToChat: false,
+                        orderId: order.id, // Associate the package with the order
+                    },
+                });
+                console.log('New package created:', newPackage);
+                return newPackage;
+            }
+        } catch (error) {
+            console.error('Error updating nova_post_ttn and handling package:', error);
+            throw error;
+        }
+    }
 
     /**
      * Set isSentToChat to true for a package by orderId.
@@ -117,36 +117,112 @@ class OrderRepository {
         }
     }
 
-  // Update multiple orders with customer_phone and nova_post_ttn pairs
-  async setTtnForMultipleOrders(orders) {
-    const updatePromises = orders.map(order =>
-      prisma.order.updateMany({
-        where: { customer_phone: order.customer_phone },
-        data: { nova_post_ttn: order.ttn },
-      })
-    );
-  
-    return await Promise.all(updatePromises);
-  }
+    // Update multiple orders with customer_phone and nova_post_ttn pairs
+    async setTtnForMultipleOrders(orders) {
+        const updatePromises = orders.map(order =>
+            prisma.order.updateMany({
+                where: { customer_phone: order.customer_phone },
+                data: { nova_post_ttn: order.ttn },
+            })
+        );
 
-  // Change order's customer_phone by telegram_message_id
-  async changeOrderCustomerPhoneByTelegramMessageId(telegramMessageId, newCustomerPhone) {
-    return await prisma.order.updateMany({
-      where: { telegram_message_id: telegramMessageId },
-      data: { customer_phone: newCustomerPhone },
-    });
-  }
-
-  async findOrderByCustomerPhone(customerPhone) {
-    try {
-      return await prisma.order.findFirst({
-        where: { customer_phone: customerPhone },
-      });
-    } catch (error) {
-      console.error('Error finding order by customer phone:', error);
-      return null;
+        return await Promise.all(updatePromises);
     }
-  }
+
+    // Change order's customer_phone by telegram_message_id
+    async changeOrderCustomerPhoneByTelegramMessageId(telegramMessageId, newCustomerPhone) {
+        return await prisma.order.updateMany({
+            where: { telegram_message_id: telegramMessageId },
+            data: { customer_phone: newCustomerPhone },
+        });
+    }
+
+    async findOrderByCustomerPhone(customerPhone) {
+        try {
+            return await prisma.order.findFirst({
+                where: { customer_phone: customerPhone },
+            });
+        } catch (error) {
+            console.error('Error finding order by customer phone:', error);
+            return null;
+        }
+    }
+
+    /**
+     * Delete an order by ID.
+     * @param {number} orderId - The order ID to delete.
+     * @returns {Object|null} - The deleted order, or null if not found.
+     */
+    async deleteOrderById(orderId) {
+        try {
+            const deletedOrder = await prisma.order.delete({
+                where: { id: orderId },
+            });
+            console.log(`Order with ID ${orderId} deleted.`);
+            return deletedOrder;
+        } catch (error) {
+            console.error('Error deleting order:', error);
+            throw error;
+        }
+    }
+
+    /**
+     * Delete orders by customer phone.
+     * @param {string} customerPhone - The customer phone to delete orders for.
+     * @returns {Object} - The result of the delete operation.
+     */
+    async deleteOrdersByCustomerPhone(customerPhone) {
+        try {
+            const result = await prisma.order.deleteMany({
+                where: { customer_phone: customerPhone },
+            });
+            console.log(`${result.count} orders deleted for customer phone: ${customerPhone}`);
+            return result;
+        } catch (error) {
+            console.error('Error deleting orders by customer phone:', error);
+            throw error;
+        }
+    }
+
+    /**
+     * Delete orders by Telegram chat ID.
+     * @param {string} telegramChatId - The Telegram chat ID to delete orders for.
+     * @returns {Object} - The result of the delete operation.
+     */
+    async deleteOrdersByTelegramChatId(telegramChatId) {
+        try {
+            const result = await prisma.order.deleteMany({
+                where: { telegram_chat_id: telegramChatId },
+            });
+            console.log(`${result.count} orders deleted for Telegram chat ID: ${telegramChatId}`);
+            return result;
+        } catch (error) {
+            console.error('Error deleting orders by Telegram chat ID:', error);
+            throw error;
+        }
+    }
+
+    /**
+     * Delete multiple orders by IDs.
+     * @param {Array<number>} orderIds - Array of order IDs to delete.
+     * @returns {Object} - The result of the delete operation.
+     */
+    async deleteOrdersByIds(orderIds) {
+        try {
+            const result = await prisma.order.deleteMany({
+                where: {
+                    id: {
+                        in: orderIds
+                    }
+                },
+            });
+            console.log(`${result.count} orders deleted for IDs: ${orderIds.join(', ')}`);
+            return result;
+        } catch (error) {
+            console.error('Error deleting orders by IDs:', error);
+            throw error;
+        }
+    }
 }
 
 module.exports = OrderRepository;
